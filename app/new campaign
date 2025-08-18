@@ -1,0 +1,48 @@
+import { createCampaign } from '@/app/actions/campaign';
+
+export default function NewCampaignPage() {
+  return (
+    <main className="mx-auto max-w-2xl p-6">
+      <h1 className="text-2xl font-semibold">Create a campaign</h1>
+
+      <form action={createCampaign} className="mt-6 space-y-4">
+        <div>
+          <label className="block text-sm font-medium">Title</label>
+          <input
+            name="title"
+            required
+            className="mt-1 w-full rounded-md border p-2"
+            placeholder="e.g., Help build a community library"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Goal amount (INR)</label>
+          <input
+            name="goalAmount"
+            type="number"
+            min={1}
+            required
+            className="mt-1 w-full rounded-md border p-2"
+            placeholder="50000"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Story</label>
+          <textarea
+            name="story"
+            rows={6}
+            required
+            className="mt-1 w-full rounded-md border p-2"
+            placeholder="Tell supporters what this campaign is about..."
+          />
+        </div>
+
+        <button className="rounded-md bg-black px-4 py-2 text-white">
+          Save campaign
+        </button>
+      </form>
+    </main>
+  );
+}

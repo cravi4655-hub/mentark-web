@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  title       String
+  story       String
+  goalAmount  Int
+  slug        String   @unique
+  isApproved  Boolean  @default(false)
+  currency    String
+  createdAt   DateTime @default(now())
+}
+
+model Preference {
+  id        String   @id @default(cuid())
+  userId    String?
+  answers   Json
+  createdAt DateTime @default(now())
+}
+
+model ProfileSummary {
+  id           String   @id @default(cuid())
+  userId       String?
+  preferenceId String
+
+  // JSON so arrays/objects can be stored directly
+  goals        Json?
+  persona      String?
+  cadence      String?
+  focusAreas   Json?
+  plan         Json?
+  tags         Json?
+
+  vector       Bytes?
+  createdAt    DateTime @default(now())
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  userId      String?
+  profileId   String?          // tie to ProfileSummary if available
+  title       String
+  description String?
+  targetDate  DateTime?
+  createdAt   DateTime @default(now())
+  status      String   @default("active") // active | completed | archived
+  tasks       Task[]
+}
+
+model Task {
+  id         String   @id @default(cuid())
+  goalId     String
+  title      String
+  dayIndex   Int       @default(0)  // Day 0..N relative to now (helps for spreads)
+  dueDate    DateTime?
+  done       Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  sortIndex  Int       @default(0)
+
+  goal       Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+}
+
+model ReminderPref {
+  id         String   @id @default(cuid())
+  userId     String?
+  profileId  String?
+  // daily | weekly | deadlines-only | none
+  cadence    String   @default("weekly")
+  // hour in 24h (e.g., 19 means 7pm local)
+  hour       Int      @default(19)
+  timezone   String?  // e.g. "Asia/Kolkata"
+  createdAt  DateTime @default(now)
+}

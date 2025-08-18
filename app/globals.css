@@ -1,0 +1,272 @@
+/* ===========================
+   Mentark Global Styles (Tailwind v4)
+   Paste this whole file into app/globals.css
+   =========================== */
+
+@import "tailwindcss";
+
+/* ---------- Theme Variables ---------- */
+:root {
+  /* base (light) */
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* dark starry theme */
+  --bg: #05060b;
+  --text: #e6e9f2;
+  --muted: #8a94a7;
+
+  --accent-neon: #6a8dff;
+  --accent-2: #7a5cff;
+  --ring: 0 0 0 2px rgba(122,92,255,0.35), 0 0 20px rgba(106,141,255,0.35);
+}
+
+/* Respect OS dark mode (we still force starry bg below) */
+@media (prefers-color-scheme: dark) {
+  :root { --background: #0a0a0a; --foreground: #ededed; }
+}
+
+/* ---------- Base Page ---------- */
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  line-height: 1.5;
+
+  /* Starry gradient background + readable text by default */
+  background: radial-gradient(1200px 800px at 20% 10%, #0f1323 0%, var(--bg) 55%, #000 100%);
+  color: var(--text);
+}
+
+/* Optional: if you use a fixed navbar, give body top padding here */
+/* body { padding-top: 64px; } */
+
+/* ---------- Starry Background Overlay ---------- */
+/* In your layout/page, render: <div class="starry"></div> once */
+.starry {
+  position: fixed; inset: 0; pointer-events: none; z-index: -1;
+}
+.starry:before, .starry:after {
+  content: ""; position: absolute; inset: 0; background-repeat: repeat;
+  animation: twinkle 10s linear infinite;
+  filter: drop-shadow(0 0 2px #fff);
+}
+.starry:before {
+  background-image:
+    radial-gradient(2px 2px at 20px 30px, #fff 40%, transparent 41%),
+    radial-gradient(1px 1px at 50px 80px, #fff 40%, transparent 41%),
+    radial-gradient(1px 1px at 130px 160px, #fff 40%, transparent 41%),
+    radial-gradient(2px 2px at 220px 120px, #fff 40%, transparent 41%);
+  background-size: 250px 250px;
+  opacity: .6;
+}
+.starry:after {
+  background-image:
+    radial-gradient(1px 1px at 40px 50px, #cbe0ff 40%, transparent 41%),
+    radial-gradient(2px 2px at 150px 100px, #d8ccff 40%, transparent 41%),
+    radial-gradient(1px 1px at 200px 200px, #cbe0ff 40%, transparent 41%),
+    radial-gradient(2px 2px at 80px 180px, #d8ccff 40%, transparent 41%);
+  background-size: 320px 320px;
+  opacity: .5;
+  animation-duration: 14s;
+}
+@keyframes twinkle {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-40px); }
+}
+
+/* ---------- Layout Helpers ---------- */
+.container {
+  max-width: 760px;
+  margin: 56px auto;
+  padding: 0 16px;
+}
+
+/* Neon glass card */
+.card {
+  background: linear-gradient(180deg, rgba(15,18,34,.85), rgba(7,9,18,.85));
+  border: 1px solid rgba(106,141,255,.15);
+  border-radius: 16px;
+  box-shadow:
+    0 8px 40px rgba(0,0,0,.45),
+    0 0 60px rgba(122,92,255,.08) inset;
+  padding: 24px;
+  backdrop-filter: blur(8px);
+  color: var(--text);
+}
+
+/* ---------- Typography ---------- */
+.h1 { font-size: 28px; font-weight: 700; letter-spacing:.2px; }
+.muted { color: var(--muted); font-size: 14px; }
+.badge {
+  display:inline-block; font-size:12px; padding:4px 8px; border-radius:999px;
+  background:#151c3f; color:#aeb6ff; margin-left:6px;
+  border:1px solid rgba(122,92,255,.35);
+}
+
+/* ---------- Form Controls ---------- */
+.field { margin-top: 18px; }
+.label {
+  font-size: 14px; font-weight: 600; display:block; margin-bottom: 8px;
+  color: var(--text);
+}
+.input, .select, .textarea {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #0c1122;
+  color: var(--text);
+  outline: none;
+}
+.input:focus, .select:focus, .textarea:focus { box-shadow: var(--ring); }
+
+/* Choice cards (for radio/checkbox groups) */
+.choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.choice {
+  border: 1px solid rgba(255,255,255,.12);
+  background: #0b1020;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  display:flex; align-items:center; gap:10px;
+  color: var(--text);
+}
+.choice input { accent-color: var(--accent-2); }
+.choice:hover {
+  border-color: rgba(122,92,255,.6);
+  box-shadow: 0 0 16px rgba(122,92,255,.15) inset;
+}
+
+/* ---------- Buttons ---------- */
+.actions { display:flex; gap:10px; margin-top: 18px; }
+.btn {
+  background: linear-gradient(90deg, var(--accent-neon), var(--accent-2));
+  color:white; border:none; border-radius: 12px; padding:10px 16px; font-weight:700; cursor:pointer;
+}
+.btn:hover { filter: brightness(1.05); }
+.btn.secondary {
+  background: #121631; color:#d7dbef; border:1px solid rgba(255,255,255,.1);
+}
+.btn.ghost {
+  background: transparent; color:#aeb6ff; border: 1px solid rgba(122,92,255,.45);
+}
+
+/* ---------- Progress Bar ---------- */
+.progress {
+  height: 8px;
+  background: #0e1330;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 14px 0;
+  border:1px solid rgba(255,255,255,.08);
+}
+.progress > span {
+  display:block; height: 100%;
+  background: linear-gradient(90deg, #47d3ff, #7a5cff);
+  width: 0%;
+}
+
+/* ---------- Helper text ---------- */
+.help { color: var(--muted); font-size: 12px; margin-top: 6px; }
+/* ==== Chat layout ==== */
+.chat-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 18px;
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+.chat-side { position: relative; }
+.chat-main { position: relative; }
+
+.side-card, .chat-card {
+  background: linear-gradient(180deg, rgba(15,18,34,.88), rgba(7,9,18,.88));
+  border: 1px solid rgba(122,92,255,.16);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,.45), 0 0 60px rgba(122,92,255,.08) inset;
+  backdrop-filter: blur(8px);
+  padding: 16px;
+}
+
+.side-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.side-title { font-size: 18px; font-weight: 700; }
+
+.goal-meta { margin: 10px 0 6px; }
+.goal-title { font-weight: 600; }
+
+/* progress ring */
+.progress-ring {
+  position: relative; width: 110px; height: 110px; margin: 6px 0;
+}
+.progress-ring .ring {
+  --p: 0%;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, #0b0f1a 79%, transparent 80% 100%),
+    conic-gradient(#7a5cff var(--p), #23284a 0);
+  box-shadow: 0 0 18px rgba(122,92,255,.35) inset, 0 0 24px rgba(106,141,255,.35);
+}
+.progress-ring .ring-label {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-weight: 800;
+}
+
+/* task list */
+.task-list { margin-top: 8px; display: grid; gap: 8px; }
+.task {
+  display: grid; grid-template-columns: 26px 1fr; gap: 10px;
+  padding: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px;
+}
+.task.done { opacity: .7; }
+.tick { display:flex; align-items:center; }
+.tick input { width: 18px; height: 18px; }
+.tick .icon { margin-left: 6px; opacity: .6; }
+
+.quick-create { margin-top: 10px; display: grid; gap: 8px; }
+.quick-create.compact { grid-template-columns: 1fr 82px auto; align-items: center; }
+.quick-create .row { display: grid; grid-template-columns: 110px auto; gap: 10px; }
+
+/* chat window */
+.chat-header { display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px; }
+.chat-window {
+  height: 420px; overflow: auto; border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px; padding: 14px; background: #0c1122;
+}
+.bubble {
+  max-width: 80%; padding: 10px 12px; border-radius: 12px;
+  margin: 8px 0; line-height: 1.45;
+}
+.bubble.bot { background: rgba(122,92,255,.1); border: 1px solid rgba(122,92,255,.3); }
+
+.chat-input {
+  display: grid; grid-template-columns: 1fr 120px; gap: 10px;
+  margin-top: 12px;
+}
+
+/* buttons */
+.btn.large { height: 44px; font-size: 15px; }
+.btn.neon {
+  background: linear-gradient(90deg, #6a8dff, #7a5cff); color: #fff;
+  border: none; border-radius: 12px; padding: 10px 14px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.btn.neon:hover { filter: brightness(1.08); }
+
+/* heavier starfield */
+.starry-heavy:before, .starry-heavy:after { filter: drop-shadow(0 0 3px #9fb3ff); }
+.starry-heavy:before {
+  background-size: 180px 180px;
+  opacity: .8;
+}
+.starry-heavy:after {
+  background-size: 250px 250px;
+  opacity: .7;
+}
