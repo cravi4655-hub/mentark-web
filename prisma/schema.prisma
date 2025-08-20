@@ -1,3 +1,4 @@
+// Updated prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,68 +8,253 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Campaign {
-  id         String   @id @default(cuid())
-  title      String
-  story      String
-  goalAmount Int
-  slug       String   @unique
-  isApproved Boolean  @default(false)
-  currency   String
-  createdAt  DateTime @default(now())
+// Authentication Models
+model User {
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  phone         String?   @unique
+  name          String?
+  avatar        String?
+  userType      UserType  @default(STUDENT)
+  university    String?   // For university partnerships
+  department    String?   // For students
+  year          String?   // For students
+  profession    String?   // For working professionals
+  company       String?   // For working professionals
+  experience    String?   // For working professionals
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  preferences   Preference[]
+  profiles      ProfileSummary[]
+  goals         Goal[]
+  assistants    AIAssistant[]
+
+  @@map("users")
 }
 
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+// AI Assistant Model
+model AIAssistant {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String   // User's custom name for their AI
+  personality   String?  // friendly, professional, motivational, etc.
+  primaryModel  String   @default("openai") // openai, claude, gemini, perplexity
+  fallbackModel String?  // backup model if primary fails
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@map("ai_assistants")
+}
+
+// Updated existing models with user relations
 model Preference {
   id        String   @id @default(cuid())
-  userId    String?
+  userId    String
   answers   Json
+  userType  UserType
   createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProfileSummary {
   id           String   @id @default(cuid())
-  userId       String?
+  userId       String
   preferenceId String
-  goals        Json?
+  
+  // Analysis Results
+  challenges   Json?    // Identified challenges
+  strengths    Json?    // Key strengths
+  weaknesses   Json?    // Areas for improvement
+  shortGoals   Json?    // 30-90 day goals
+  longGoals    Json?    // 6+ month goals
+  urgentNeeds  Json?    // Immediate priorities
+  
+  // AI Insights
   persona      String?
   cadence      String?
   focusAreas   Json?
   plan         Json?
   tags         Json?
+  
+  // Reddit-based insights
+  similarIssues Json?   // Similar problems from Reddit
+  solutions     Json?   // Crowd-sourced solutions
+  
   vector       Bytes?
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Goal {
-  id          String    @id @default(cuid())
-  userId      String?
+  id          String     @id @default(cuid())
+  userId      String
   profileId   String?
   title       String
   description String?
+  category    GoalCategory @default(PERSONAL)
+  priority    Priority   @default(MEDIUM)
+  urgency     Urgency    @default(LOW)
   targetDate  DateTime?
-  createdAt   DateTime  @default(now())
-  status      String    @default("active")
-  tasks       Task[]
+  status      GoalStatus @default(ACTIVE)
+  progress    Int        @default(0) // 0-100
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks Task[]
+  achievements Achievement[]
 }
 
 model Task {
-  id        String    @id @default(cuid())
-  goalId    String
-  title     String
-  dayIndex  Int       @default(0)
-  dueDate   DateTime?
-  done      Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  sortIndex Int       @default(0)
-  goal      Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  goalId     String
+  title      String
+  description String?
+  dayIndex   Int      @default(0)
+  dueDate    DateTime?
+  priority   Priority @default(MEDIUM)
+  done       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  sortIndex  Int      @default(0)
+  
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  goalId      String
+  title       String
+  description String?
+  points      Int      @default(0)
+  unlockedAt  DateTime @default(now())
+  
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  assistantId String
+  role        String   // 'user' | 'assistant' | 'system'
+  content     String
+  model       String?  // Which AI model was used
+  tokens      Int?     // Token usage for cost tracking
+  cost        Float?   // Cost in USD
+  createdAt   DateTime @default(now())
+  
+  assistant AIAssistant @relation(fields: [assistantId], references: [id], onDelete: Cascade)
+  
+  @@index([assistantId, createdAt])
 }
 
 model ReminderPref {
-  id        String   @id @default(cuid())
-  userId    String?
-  profileId String?
-  cadence   String   @default("weekly")
-  hour      Int      @default(19)
-  timezone  String?
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  profileId  String?
+  cadence    String   @default("weekly") // daily | weekly | deadlines-only | none
+  hour       Int      @default(19)       // 7pm local
+  timezone   String?                      // e.g. "Asia/Kolkata"
+  createdAt  DateTime @default(now())
+}
+
+// Keep existing Campaign model (for fundraising feature)
+model Campaign {
+  id          String   @id @default(cuid())
+  title       String
+  story       String
+  goalAmount  Int
+  slug        String   @unique
+  isApproved  Boolean  @default(false)
+  currency    String
+  createdAt   DateTime @default(now())
+}
+
+// Enums
+enum UserType {
+  STUDENT
+  PROFESSIONAL
+  OTHER
+}
+
+enum GoalCategory {
+  ACADEMIC
+  CAREER
+  PERSONAL
+  HEALTH
+  FINANCIAL
+  SKILLS
+  RELATIONSHIPS
+  OTHER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Urgency {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  CANCELLED
 }
