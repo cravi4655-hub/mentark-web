@@ -3,19 +3,23 @@ import { db } from '@/lib/db';
 import { GoalQuickCreate } from './quick-create';
 import { TaskList } from './task-list';
 import Link from 'next/link';
+import type { GoalDTO, TaskDTO } from '@/types/mentark';
+import React from 'react';
 
 function pct(done: number, total: number) {
   if (total === 0) return 0;
   return Math.round((done / total) * 100);
 }
 
+// NOTE: Next.js 15 typegen expects searchParams as a Promise
 export default async function TalkPage({
   searchParams,
-}: { searchParams: { profile?: string } }) {
-  const profileId = searchParams?.profile ?? null;
+}: {
+  searchParams: Promise<{ profile?: string }>;
+}) {
+  const { profile: profileId } = await searchParams;
 
-  // Latest goal tied to this profile (if any)
-  const goal = profileId
+  const goalRecord = profileId
     ? await db.goal.findFirst({
         where: { profileId },
         orderBy: { createdAt: 'desc' },
@@ -23,20 +27,27 @@ export default async function TalkPage({
       })
     : null;
 
-  const doneCount = goal ? goal.tasks.filter((t) => t.done).length : 0;
-  const progress = goal ? pct(doneCount, goal.tasks.length) : 0;
+  const doneCount = goalRecord ? goalRecord.tasks.filter((t) => t.done).length : 0;
+  const progress = goalRecord ? pct(doneCount, goalRecord.tasks.length) : 0;
 
-  // Prepare serializable tasks for the client component
-  const tasksForClient =
-    goal?.tasks.map((t) => ({
+  const tasksForClient: TaskDTO[] =
+    goalRecord?.tasks.map((t) => ({
       id: t.id,
       title: t.title,
       done: t.done,
       dueDate: t.dueDate ? t.dueDate.toISOString() : null,
     })) ?? [];
 
-  // CSS var style (cast so TS stops complaining)
-  const ringStyle = { ['--p' as any]: `${progress}%` } as React.CSSProperties;
+  const goal: GoalDTO | null = goalRecord
+    ? {
+        id: goalRecord.id,
+        title: goalRecord.title,
+        targetDate: goalRecord.targetDate ? goalRecord.targetDate.toISOString() : null,
+        tasks: tasksForClient,
+      }
+    : null;
+
+  const ringStyle = { ['--p' as unknown as string]: `${progress}%` } as React.CSSProperties;
 
   return (
     <main className="chat-shell">

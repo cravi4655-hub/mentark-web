@@ -1,55 +1,87 @@
 // app/chat/page.tsx
-import { db } from '@/lib/db';
-import Link from 'next/link';
+import { db } from "@/lib/db";
+import Link from "next/link";
 
-function renderValue(v: any) {
-  if (v == null) return '—';
-  if (Array.isArray(v)) return v.join(', ');
-  if (typeof v === 'object') return JSON.stringify(v, null, 2);
+// Local JSON + DTO types (no `any`)
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json }
+  | Json[];
+
+export type Plan = {
+  weekly?: string[];
+  daily?: string[];
+};
+
+export type ProfileSummaryDTO = {
+  id: string;
+  preferenceId: string | null;
+  persona: Json | null;
+  cadence: Json | null;
+  focusAreas: Json | null;
+  goals: Json | null;
+  plan: Json | null;
+  tags: Json | null;
+};
+
+function renderValue(v: Json | null): string {
+  if (v == null) return "—";
+  if (Array.isArray(v)) return v.map((x) => String(x)).join(", ");
+  if (typeof v === "object") return JSON.stringify(v, null, 2);
   return String(v);
 }
 
-function renderPlan(plan: any) {
+function renderPlan(plan: Plan | Json | null) {
   if (!plan) return <p className="muted">—</p>;
-  const weekly = Array.isArray(plan?.weekly) ? plan.weekly : [];
-  const daily  = Array.isArray(plan?.daily) ? plan.daily : [];
 
-  if (weekly.length || daily.length) {
-    return (
-      <div style={{ marginTop: 8 }}>
-        {weekly.length > 0 && (
-          <>
-            <p><strong>Weekly</strong></p>
-            <ul style={{ marginLeft: 18 }}>
-              {weekly.map((item: string, i: number) => <li key={`w-${i}`}>{item}</li>)}
-            </ul>
-          </>
-        )}
-        {daily.length > 0 && (
-          <>
-            <p style={{ marginTop: 8 }}><strong>Daily</strong></p>
-            <ul style={{ marginLeft: 18 }}>
-              {daily.map((item: string, i: number) => <li key={`d-${i}`}>{item}</li>)}
-            </ul>
-          </>
-        )}
-      </div>
-    );
+  if (typeof plan === "object" && !Array.isArray(plan)) {
+    const p = plan as Partial<Plan>;
+    const weekly = Array.isArray(p.weekly) ? p.weekly : [];
+    const daily = Array.isArray(p.daily) ? p.daily : [];
+    if (weekly.length || daily.length) {
+      return (
+        <div style={{ marginTop: 8 }}>
+          {weekly.length > 0 && (
+            <>
+              <p><strong>Weekly</strong></p>
+              <ul style={{ marginLeft: 18 }}>
+                {weekly.map((item, i) => <li key={`w-${i}`}>{item}</li>)}
+              </ul>
+            </>
+          )}
+          {daily.length > 0 && (
+            <>
+              <p style={{ marginTop: 8 }}><strong>Daily</strong></p>
+              <ul style={{ marginLeft: 18 }}>
+                {daily.map((item, i) => <li key={`d-${i}`}>{item}</li>)}
+              </ul>
+            </>
+          )}
+        </div>
+      );
+    }
   }
 
-  if (typeof plan === 'object') {
-    return <pre style={{ whiteSpace: 'pre-wrap', marginTop: 6 }}>{JSON.stringify(plan, null, 2)}</pre>;
-  }
-  return <p className="muted">{String(plan)}</p>;
+  // Fallback for string/array/object without weekly/daily
+  return (
+    <pre style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>
+      {typeof plan === "string" ? plan : JSON.stringify(plan, null, 2)}
+    </pre>
+  );
 }
 
 export default async function ChatPage({
   searchParams,
 }: {
-  searchParams: { profile?: string };
+  searchParams: Promise<{ profile?: string }>;
 }) {
-  const profileId = searchParams?.profile;
-  const profile = profileId
+  // Await searchParams in Next.js 15
+  const { profile: profileId } = await searchParams;
+  
+  const profile: ProfileSummaryDTO | null = profileId
     ? await db.profileSummary.findUnique({
         where: { id: profileId },
         select: {

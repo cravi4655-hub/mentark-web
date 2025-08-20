@@ -3,9 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL_PG")
 }
+
 
 model Campaign {
   id          String   @id @default(cuid())
@@ -76,5 +77,5 @@ model ReminderPref {
   // hour in 24h (e.g., 19 means 7pm local)
   hour       Int      @default(19)
   timezone   String?  // e.g. "Asia/Kolkata"
-  createdAt  DateTime @default(now)
+  createdAt  DateTime @default(now())
 }

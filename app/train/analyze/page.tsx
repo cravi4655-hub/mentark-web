@@ -2,11 +2,20 @@
 import { analyzePreferences } from '@/app/actions/preferences';
 import { redirect } from 'next/navigation';
 
-export default async function AnalyzePage({ searchParams }: { searchParams: { pref?: string } }) {
-  const prefId = searchParams.pref;
-  if (!prefId) {
-    return <main className="container"><div className="card">Missing preference id.</div></main>;
+// NOTE: in Next.js 15 types, searchParams is a Promise
+export default async function AnalyzePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pref?: string }>;
+}) {
+  const { pref } = await searchParams;
+
+  if (!pref) {
+    redirect('/train');
   }
-  const profileId = await analyzePreferences(prefId);
+
+  const profileId = await analyzePreferences(pref);
   redirect(`/chat?profile=${profileId}`);
 }
+
+// ⛔ Do NOT add any other exports here.

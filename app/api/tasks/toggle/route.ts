@@ -1,13 +1,27 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+// app/api/tasks/toggle/route.ts
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+
+type ToggleTaskBody = {
+  id: string;
+  done: boolean;
+};
 
 export async function POST(req: Request) {
-  try {
-    const { id, done } = await req.json();
-    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
-    await db.task.update({ where: { id: String(id) }, data: { done: Boolean(done) } });
-    return NextResponse.json({ ok: true });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Failed' }, { status: 400 });
+  const body = (await req.json()) as ToggleTaskBody;
+
+  if (!body || typeof body.id !== "string" || typeof body.done !== "boolean") {
+    return NextResponse.json(
+      { ok: false, error: "Invalid payload" },
+      { status: 400 }
+    );
   }
+
+  const updated = await db.task.update({
+    where: { id: body.id },
+    data: { done: body.done },
+    select: { id: true, done: true },
+  });
+
+  return NextResponse.json({ ok: true, task: updated });
 }
